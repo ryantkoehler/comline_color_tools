@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 #   Simple text coloring of numbers
 #   Ryan Koehler 3/17/14; Modified from color_seq.pl
-#
 #   4/4/14 RTK V0.2; Update with comargs 
+#   5/15/14 RTK V0.21; Add -iz
 #
 
 use strict;
@@ -13,8 +13,9 @@ use Readonly;
 use Carp;
 use RTKUtil     qw(split_string);
 
+Readonly my $VERSION => "color_nums.pl V0.21; RTK 4/4/14";
+
 #   Constants for coloring scheme
-Readonly my $VERSION => "color_nums.pl V0.2; RTK 4/4/14";
 Readonly my $COLSCHEME_DEF  => 0;
 Readonly my $COLSCHEME_RYC  => 1;
 Readonly my $COLSCHEME_RWB  => 2;
@@ -45,6 +46,7 @@ sub col_num_use
     print "  -nr        Normal range: Color 0 to 1\n";
     print "  -n2        2-sided normal range: Color -1 to 1\n";
     print "  -ok        Only qualifying numbers colored\n";
+    print "  -iz        Ignore zero (i.e. no color)\n";
     print "  -col # #   Columns # to # (Token-based count)\n";
     print "  -not       Invert col qualifications\n";
     print "  -all       Color all lines; Default ignores comment '#'\n";
@@ -71,6 +73,7 @@ sub col_num_use
         'th_hi'     => '',
         'do_nr'     => 0,
         'do_n2'     => 0,
+        'do_iz'     => 0,
         'sub_cols'  => [],
         'do_ok'     => 0,
         'do_not'    => 0,
@@ -89,6 +92,7 @@ sub col_num_use
         'nr'        => \$comargs->{do_nr},
         'n2'        => \$comargs->{do_n2},
         'ok'        => \$comargs->{do_ok},
+        'iz'        => \$comargs->{do_iz},
         'col=f{2}'  => $comargs->{sub_cols},
         'all'       => \$comargs->{do_all},
         'not'       => \$comargs->{do_not},
@@ -187,16 +191,20 @@ sub get_color_map_hash
     }
     elsif ( $scheme == $COLSCHEME_RYC ) {
         $colormap = {
-        'High' => 'red', 
-        'Mid' => 'yellow', 
-        'Low' => 'cyan', 
+        'Over'  => 'magenta', 
+        'High'  => 'red', 
+        'Mid'   => 'yellow', 
+        'Low'   => 'cyan', 
+        'Under' => 'blue', 
         };
     }
     elsif ( $scheme == $COLSCHEME_RWB) {
         $colormap = {
-        'High' => 'red', 
-        'Mid' => 'white', 
-        'Low' => 'blue', 
+        'Over'  => 'yellow', 
+        'High'  => 'red', 
+        'Mid'   => 'white', 
+        'Low'   => 'blue', 
+        'Under' => 'green', 
         };
     }
     #
@@ -204,9 +212,10 @@ sub get_color_map_hash
     #
     else {
         $colormap = {
-        'High' => 'red', 
-        'Mid' => 'yellow', 
-        'Low' => 'blue', 
+        'High'  => 'red', 
+        'Mid'   => 'yellow', 
+        'Low'   => 'blue', 
+        'Under' => 'white', 
         };
     }
     return $colormap;
@@ -238,11 +247,12 @@ sub dump_num_thresh
     if (defined $thresholds->[1]) {
         print "# High color threshold: $thresholds->[1]\n";
     } 
+    return;
 }
 
 ###########################################################################
 #
-#   Magic regex to match numbers!
+#   Magic regex to match numbers (source?)
 #
 sub word_is_number 
 {
@@ -256,6 +266,9 @@ sub word_is_number
 }
 
 ###########################################################################
+#
+#   Check if number is in range for coloring
+#
 sub is_col_in_range
 {
     my $col = shift @_;
@@ -272,7 +285,7 @@ sub is_col_in_range
 
 ###########################################################################
 #
-#   Return color based on number value, thresholds and settings
+#   Return color based on number, thresholds and settings
 #
 sub color_for_val
 {
@@ -321,6 +334,13 @@ sub color_for_val
     #
     if ( $comargs->{do_ok} ) {
         $curcol = $qual ? $colormap->{'Match'} : $colormap->{'Backgrd'};
+    }
+    #
+    #   Ignore zeros
+    #
+    if ( $comargs->{do_iz} && ($num == 0.0) ) {
+        # $curcol = $colormap->{'Backgrd'};
+        $curcol = $DEF_BACK_COLOR;
     }
     return $curcol;
 }

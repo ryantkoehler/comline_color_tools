@@ -1,7 +1,6 @@
 #!/usr/bin/perl -w
 #   Simple text coloring (e.g. for sequences)
 #   Ryan Koehler 10/11/10
-#
 #   10/26/10 V0.2 RTK 
 #   12/6/10 V0.3 RTK; Add -bc for case-dependent bold / no
 #   12/1/12 RTK; V0.4; Add -wl for white lowercase
