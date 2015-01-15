@@ -1,13 +1,15 @@
-comline_color_seq_num
+comline_color_tools
 =====================
-5/27/18 RTK
+5/27/14 RTK
+1/15/15 RTK (update; Renamed from comline_color__seq_num)
 
 Command line tools to (ANSI) colorize DNA sequences (bioinformatics) or numbers (data analysis) found within text.
 
-    color_seq.pl        Colors DNA sequence characters
+    color_seq.pl        Colors DNA sequence characters within text
 
-    color_nums.pl       Color numbers
+    color_nums.pl       Color numbers within text
 
+    color_cols.pl       Color specific columns within text
 
 =====================
 Background and overview
@@ -32,6 +34,8 @@ These perl modules are used:
 
 =====================
 Limitations / To do
+
+> Update doc for color_cols.pl ... Simple tool, but should get minimal docs.
 
 color_seq.pl
 

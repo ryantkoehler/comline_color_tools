@@ -149,6 +149,7 @@ sub set_up_options
         $comargs->{threshmap}[0] = ( $comargs->{do_n2} ) ? -1.0 : 0.0;
         $comargs->{threshmap}[1] = 1.0;
     }
+    # If we have a range, append 'not' flag
     if (scalar @{ $comargs->{sub_cols} } ) {
         push( @{ $comargs->{sub_cols} }, $comargs->{do_not});
     }
