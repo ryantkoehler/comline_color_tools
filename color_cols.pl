@@ -41,8 +41,8 @@ sub col_cols_use
     print "  -s #       Step; Mark every #'th col\n";
     print "  -col # #   Limit coloring to cols # to #\n";
     print "  -not       Invert col qualifications\n";
-    print "  -5c        Five color scheme: White Yellow Green Red Cyan\n";
-    print "  -159c      One-five-nine color scheme: 1, 5 and 9 (repeated)\n";
+    print "  -5c        Five color scheme: Cycle through\n";
+    print "  -10c       Ten color scheme: Cycle coloring 1 3 5 7 9\n";
     print "  -all       Color all lines; Default ignores comment '#'\n";
     print '=' x 77 . "\n";
     return;
@@ -62,7 +62,7 @@ sub col_cols_use
         'mstep'     => $DEF_MSTEP,
         'cmark'     => 0,
         'do_5c'     => 0,
-        'do_159c'   => 0,
+        'do_10c'    => 0,
         'do_all'    => 0,
         'do_not'    => 0,
         'sub_cols'  => [0,1000000],
@@ -73,7 +73,7 @@ sub col_cols_use
         's=i'       => \$comargs->{mstep},
         'm=i'       => \$comargs->{cmark},
         '5c'        => \$comargs->{do_5c},
-        '159c'      => \$comargs->{do_159c},
+        '10c'       => \$comargs->{do_10c},
         'all'       => \$comargs->{do_all},
         'col=f{2}'  => $comargs->{sub_cols},
         'not'       => \$comargs->{do_not},
@@ -135,42 +135,34 @@ sub set_up_options
 }
 
 ###########################################################################
-sub set_up_colors
-{
-    my $comargs = shift @_;
-    my $colscheme = $COLSCHEME_DEF;
-    if ( $comargs->{do_5c} ) {
-        $colscheme = $COLSCHEME_5C;
-    }
-    elsif ( $comargs->{do_159c} ) {
-        $colscheme = $COLSCHEME_3C;
-    }
-    my $colormap = get_color_map_hash($colscheme);
-    return $colormap;
-}
-
-###########################################################################
 #
 #   Create and fill color mapping hash
 #   Allowed colors: "blue","magenta","red","yellow","green","cyan","white","black"
 #
-sub get_color_map_hash
+sub set_up_colors
 {
+    my $comargs = shift @_;
+    # Create default case
     my $colormap = {
         'Backgrd' => $DEF_BACK_COLOR,
         'Match' => $DEF_QUAL_COLOR,
-    # sham ... should be scheme-specific ???
-        '0'     => 'red', 
-        '1'     => 'yellow', 
-        '2'     => 'green', 
-        '3'     => 'cyan', 
-        '4'     => 'magenta', 
-        'low'   => 'red', 
-        'mid'   => 'cyan', 
-        'high'  => 'green', 
-        'Backgrd' => $DEF_BACK_COLOR,
-        'Match' => $DEF_QUAL_COLOR,
-    };
+        };
+    # Add for 5 color case
+    if ( $comargs->{do_5c} ) {
+        $colormap->{'0'} = 'red';
+        $colormap->{'1'} = 'yellow';
+        $colormap->{'2'} = 'green';
+        $colormap->{'3'} = 'cyan';
+        $colormap->{'4'} = 'magenta';
+    }
+    # Add for 10 color case
+    elsif ( $comargs->{do_10c} ) {
+        $colormap->{'0'} = 'red';
+        $colormap->{'2'} = 'yellow';
+        $colormap->{'4'} = 'cyan';
+        $colormap->{'6'} = 'yellow';
+        $colormap->{'8'} = 'green';
+    }
     return $colormap;
 }
 
@@ -225,18 +217,15 @@ sub color_for_col
         $curcol = $colormap->{$cind};
     }
     #
-    #   159 three color case?
+    #   10color case?
     #
-    elsif ( $comargs->{do_159c} ) {
+    elsif ( $comargs->{do_10c} ) {
         my $cind = ($col - 1) % 10;
-        if ($cind == 0) {
-            $curcol = $colormap->{'low'};
+        if ( exists $colormap->{$cind} ) {
+            $curcol = $colormap->{$cind};
         }
-        elsif ($cind == 4) {
-            $curcol = $colormap->{'mid'};
-        }
-        elsif ($cind == 9) {
-            $curcol = $colormap->{'high'};
+        else {
+            $curcol = $colormap->{'Backgrd'};
         }
     }
     #
