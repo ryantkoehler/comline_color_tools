@@ -2,6 +2,7 @@ comline_color_tools
 =====================
 5/27/14 RTK
 1/15/15 RTK (update; Renamed from comline_color__seq_num)
+3/31/15 RTK (update color_cols.pl)
 
 Command line tools to (ANSI) colorize DNA sequences (bioinformatics) or numbers (data analysis) found within text.
 

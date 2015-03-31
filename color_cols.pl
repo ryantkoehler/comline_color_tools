@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 #   Simple text coloring of columns
 #   Ryan Koehler 1/14/15; Modified from color_nums.pl
+#   3/21/15 RTK; V0.2; Add -2c and default to -10c
 #
 
 use strict;
@@ -11,13 +12,13 @@ use Readonly;
 use Carp;
 use RTKUtil     qw(split_string);
 
-Readonly my $VERSION => "color_cols.pl V0.1; RTK 1/14/15";
+Readonly my $VERSION => "color_cols.pl V0.2; RTK 3/21/15";
 
-#   Constants for coloring scheme
-Readonly my $COLSCHEME_DEF  => 0;
-Readonly my $COLSCHEME_3C   => 1;
-Readonly my $COLSCHEME_5C   => 2;
+Readonly my $COLSCHEME_2    => '2c';
+Readonly my $COLSCHEME_5    => '5c';
+Readonly my $COLSCHEME_10   => '10c';
 
+# Defaults
 Readonly my $DEF_QUAL_COLOR => 'red';
 Readonly my $DEF_BACK_COLOR => 'white';
 
@@ -41,10 +42,15 @@ sub col_cols_use
     print "  -s #       Step; Mark every #'th col\n";
     print "  -col # #   Limit coloring to cols # to #\n";
     print "  -not       Invert col qualifications\n";
-    print "  -5c        Five color scheme: Cycle through\n";
-    print "  -10c       Ten color scheme: Cycle coloring 1 3 5 7 9\n";
+    print "  -2c        Two color scheme:  Cycle ";
+    print_color_scheme_nums($COLSCHEME_2, 10);
+    print "  -5c        Five color scheme: Cycle ";
+    print_color_scheme_nums($COLSCHEME_5, 10);
+    print "  -10c       Ten color scheme:  Cycle ";
+    print_color_scheme_nums($COLSCHEME_10, 10);
     print "  -all       Color all lines; Default ignores comment '#'\n";
     print '=' x 77 . "\n";
+    print "\n";
     return;
 }
 
@@ -61,21 +67,23 @@ sub col_cols_use
     my $comargs = {
         'mstep'     => $DEF_MSTEP,
         'cmark'     => 0,
+        'do_2c'     => 0,
         'do_5c'     => 0,
-        'do_10c'    => 0,
+        'do_10c'    => 0,       
         'do_all'    => 0,
         'do_not'    => 0,
-        'sub_cols'  => [0,1000000],
+        'sub_cols'  => [],
     };
     my $options_ok = GetOptions (
         ''          => \$do_stdin,      # Empty string for only '-' as arg
         'help'      => \$help,
         's=i'       => \$comargs->{mstep},
         'm=i'       => \$comargs->{cmark},
+        '2c'        => \$comargs->{do_2c},     
         '5c'        => \$comargs->{do_5c},
         '10c'       => \$comargs->{do_10c},
         'all'       => \$comargs->{do_all},
-        'col=f{2}'  => $comargs->{sub_cols},
+        'col=i{2}'  => $comargs->{sub_cols},
         'not'       => \$comargs->{do_not},
         );
     if ( ($help) || (!$options_ok) || ( (scalar @ARGV < 1)&&(!$do_stdin) ) ) {
@@ -117,21 +125,61 @@ sub col_cols_use
 }
 
 ###########################################################################
+#   
+#   Make options work together
+#   
 sub set_up_options 
 {
     my $comargs = shift @_;
+
+    # Initialize range structure if nothing there
+    if (scalar @{ $comargs->{sub_cols}} < 2) {
+        @{ $comargs->{sub_cols}}[0] = 0;
+        @{ $comargs->{sub_cols}}[1] = 100000;
+    }
+    # Append 'not' flag to range
+    push( @{ $comargs->{sub_cols} }, $comargs->{do_not});
+
     # If marking one col, put this value into the range structure
     if ($comargs->{cmark} > 0) {
         @{ $comargs->{sub_cols}}[0] = $comargs->{cmark};
         @{ $comargs->{sub_cols}}[1] = $comargs->{cmark} + 1;
     }
-    # If we have a range, append 'not' flag to range
-    push( @{ $comargs->{sub_cols} }, $comargs->{do_not});
-    # Make mstep at least default value 
+
+    # Make mstep at least 1
     if ( $comargs->{mstep} < 1 ) {
-        $comargs->{mstep} = $DEF_MSTEP;
+        $comargs->{mstep} = 1;
     }
+
+    # If -2c or -5c or specific mark, turn off -10c coloring; Else on by default
+    if ( ($comargs->{cmark} > 0) || $comargs->{do_2c} || $comargs->{do_5c} ) {
+          $comargs->{do_10c} = 0;
+    }
+    else {
+        $comargs->{do_10c} = 1;
+    }
+
     return 1;
+}
+
+###########################################################################
+#
+#   Get working colormap based on command args
+#
+sub set_up_colors
+{
+    my $comargs = shift @_;
+    my $colormap = '';
+    if ( $comargs->{do_5c} ) {
+        $colormap = get_scheme_colormap($COLSCHEME_5);
+    }
+    if ( $comargs->{do_10c} ) {
+        $colormap = get_scheme_colormap($COLSCHEME_10);
+    }
+    else {
+        $colormap = get_scheme_colormap($COLSCHEME_2);
+    }
+    return $colormap;
 }
 
 ###########################################################################
@@ -139,29 +187,38 @@ sub set_up_options
 #   Create and fill color mapping hash
 #   Allowed colors: "blue","magenta","red","yellow","green","cyan","white","black"
 #
-sub set_up_colors
+sub get_scheme_colormap
 {
-    my $comargs = shift @_;
-    # Create default case
+    my $sch = shift @_;
+
+    # Init minimal color map
     my $colormap = {
         'Backgrd' => $DEF_BACK_COLOR,
         'Match' => $DEF_QUAL_COLOR,
-        };
-    # Add for 5 color case
-    if ( $comargs->{do_5c} ) {
+        '0' => 'red',
+        '1' => 'white',
+    };
+    # Specific schemes may need more ....
+    # 5 color case
+    if ($sch eq $COLSCHEME_5) {
         $colormap->{'0'} = 'red';
         $colormap->{'1'} = 'yellow';
         $colormap->{'2'} = 'green';
         $colormap->{'3'} = 'cyan';
         $colormap->{'4'} = 'magenta';
     }
-    # Add for 10 color case
-    elsif ( $comargs->{do_10c} ) {
+    # 10 color case
+    if ($sch eq $COLSCHEME_10) {
         $colormap->{'0'} = 'red';
+        $colormap->{'1'} = 'white';
         $colormap->{'2'} = 'yellow';
+        $colormap->{'3'} = 'white';
         $colormap->{'4'} = 'cyan';
+        $colormap->{'5'} = 'white';
         $colormap->{'6'} = 'yellow';
+        $colormap->{'7'} = 'white';
         $colormap->{'8'} = 'green';
+        $colormap->{'9'} = 'white';
     }
     return $colormap;
 }
@@ -173,6 +230,11 @@ sub set_up_colors
 sub report_colnum_settings
 {
     my ($comargs, $colormap) = @_;
+
+    # TODO; debug?
+    #   use Data::Dumper;
+    #   print Dumper($comargs);
+
     return '';
 }
 
@@ -185,12 +247,15 @@ sub is_col_in_range
     my $col = shift @_;
     my $sub_cols = shift @_;
     my $ok = 1;
-    if ( scalar @{$sub_cols} ) {
+    # Only check range if there is one
+    if ( $sub_cols ) {
         if (($col < $sub_cols->[0]) || ($col > $sub_cols->[1])) {
             $ok = 0;
         }
-        $ok = ($sub_cols->[2]) ? !$ok : $ok;
+        $ok = ($sub_cols->[2] > 0) ? !$ok : $ok;
     }
+# TODO debug
+#print "|$col=$ok|";
     return $ok;
 }
 
@@ -258,6 +323,8 @@ sub dump_color_line
         }
         my $col_ok = is_col_in_range($col, $comargs->{sub_cols});
         if ( $col_ok ) {
+# TODO debug
+#print ".";
             my $curcol = color_for_col($col, $colormap, $comargs);
             print color($char_state, $curcol);
             print $word;
@@ -268,6 +335,33 @@ sub dump_color_line
         }
     }
     print color('reset');
+}
+
+###########################################################################
+sub print_color_scheme_nums
+{
+    my $sch = shift @_;
+    my $max = shift @_;
+
+    my $num = 0;
+    my $colormap = get_scheme_colormap($sch);
+    if ($colormap) {
+        my $char_state = 'bold';
+        while ($num < $max) {
+            if ( exists $colormap->{$num} ) {
+                my $curcol = $colormap->{$num};
+                print color($char_state, $curcol);
+                $num++;
+                print "$num ";
+            }
+            else {
+                last;
+            }
+        }
+    }
+    print color('reset');
+    print "\n";
+    return $num;
 }
 
 ###########################################################################
