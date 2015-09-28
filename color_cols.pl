@@ -2,6 +2,8 @@
 #   Simple text coloring of columns
 #   Ryan Koehler 1/14/15; Modified from color_nums.pl
 #   3/21/15 RTK; V0.2; Add -2c and default to -10c
+#   4/28/15 RTK; V0.3; Add -tab separation option
+#   9/28/15 RTK; V0.31; Fix bug with -s and -5c; Update on github
 #
 
 use strict;
@@ -12,7 +14,7 @@ use Readonly;
 use Carp;
 use RTKUtil     qw(split_string);
 
-Readonly my $VERSION => "color_cols.pl V0.2; RTK 3/21/15";
+Readonly my $VERSION => "color_cols.pl V0.31; RTK 9/28/15";
 
 Readonly my $COLSCHEME_2    => '2c';
 Readonly my $COLSCHEME_5    => '5c';
@@ -21,8 +23,6 @@ Readonly my $COLSCHEME_10   => '10c';
 # Defaults
 Readonly my $DEF_QUAL_COLOR => 'red';
 Readonly my $DEF_BACK_COLOR => 'white';
-
-Readonly my $DEF_MSTEP      => 2;
 
 
 #   Supposed to make things nice with 'more' pager.... doesn't seem to matter!
@@ -41,6 +41,7 @@ sub col_cols_use
     print "  -m #       Mark col # (Note: 1-based index on tokens)\n";
     print "  -s #       Step; Mark every #'th col\n";
     print "  -col # #   Limit coloring to cols # to #\n";
+    print "  -tab       Separate columns by tab (default is space)\n";
     print "  -not       Invert col qualifications\n";
     print "  -2c        Two color scheme:  Cycle ";
     print_color_scheme_nums($COLSCHEME_2, 10);
@@ -65,13 +66,14 @@ sub col_cols_use
     my $do_stdin = 0;
     my $help = 0;
     my $comargs = {
-        'mstep'     => $DEF_MSTEP,
+        'mstep'     => 0,
         'cmark'     => 0,
         'do_2c'     => 0,
         'do_5c'     => 0,
         'do_10c'    => 0,       
         'do_all'    => 0,
         'do_not'    => 0,
+        'do_tab'    => 0,
         'sub_cols'  => [],
     };
     my $options_ok = GetOptions (
@@ -85,6 +87,7 @@ sub col_cols_use
         'all'       => \$comargs->{do_all},
         'col=i{2}'  => $comargs->{sub_cols},
         'not'       => \$comargs->{do_not},
+        'tab'       => \$comargs->{do_tab},
         );
     if ( ($help) || (!$options_ok) || ( (scalar @ARGV < 1)&&(!$do_stdin) ) ) {
         col_cols_use();
@@ -146,17 +149,21 @@ sub set_up_options
         @{ $comargs->{sub_cols}}[1] = $comargs->{cmark} + 1;
     }
 
-    # Make mstep at least 1
-    if ( $comargs->{mstep} < 1 ) {
-        $comargs->{mstep} = 1;
-    }
-
     # If -2c or -5c or specific mark, turn off -10c coloring; Else on by default
     if ( ($comargs->{cmark} > 0) || $comargs->{do_2c} || $comargs->{do_5c} ) {
           $comargs->{do_10c} = 0;
     }
     else {
         $comargs->{do_10c} = 1;
+    }
+
+    # If mstep, turn off 5 and 10 color; Else default to 2
+    if ( $comargs->{mstep} > 0 ) {
+        $comargs->{do_10c} = 0;
+        $comargs->{do_5c} = 0;
+    }
+    else {
+        $comargs->{mstep} = 2;
     }
 
     return 1;
@@ -173,7 +180,7 @@ sub set_up_colors
     if ( $comargs->{do_5c} ) {
         $colormap = get_scheme_colormap($COLSCHEME_5);
     }
-    if ( $comargs->{do_10c} ) {
+    elsif ( $comargs->{do_10c} ) {
         $colormap = get_scheme_colormap($COLSCHEME_10);
     }
     else {
@@ -232,8 +239,8 @@ sub report_colnum_settings
     my ($comargs, $colormap) = @_;
 
     # TODO; debug?
-    #   use Data::Dumper;
-    #   print Dumper($comargs);
+    #use Data::Dumper;
+    #print Dumper($comargs);
 
     return '';
 }
@@ -280,6 +287,13 @@ sub color_for_col
     elsif ( $comargs->{do_5c} ) {
         my $cind = ($col - 1) % 5;
         $curcol = $colormap->{$cind};
+
+#        if ( exists $colormap->{$cind} ) {
+#        }
+#        else {
+#print "xxx $cind $curcol"
+#        }
+
     }
     #
     #   10color case?
@@ -311,12 +325,20 @@ sub dump_color_line
 {
     my ($line, $colormap, $comargs) = @_;
     my $char_state = 'bold';
+    my $tokens = '';
+    my $col = 0;
     #
     #   Process word at a time; split_string returns list of actual words
     #       but also spaces in between the words.
     #
-    my $tokens = split_string($line);
-    my $col = 0;
+# TODO test this ... does it do anything different???
+    if ( $comargs->{do_tab} ) {
+        $tokens = split_string($line, '\t');
+    }
+    else {
+        $tokens = split_string($line);
+    }
+    #   Loop over words
     foreach my $word ( @{$tokens} ) {
         if ( $word =~ m/\S/ ) {
             $col++;
