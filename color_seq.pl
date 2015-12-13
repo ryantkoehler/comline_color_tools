@@ -8,6 +8,7 @@
 #   3/14/14 RTK V0.51; Modularizie, clean and pretty (perlcritic)
 #       Also add -win X
 #   4/4/14 RTK V0.52; Rework with comarg
+#   12/12/15 RTK; RTK V0.53; Add -row stuff; Get rid of -bc so always "bold"
 #
 
 use strict;
@@ -20,7 +21,7 @@ use RTKUtil     qw(split_string);
 use DnaString   qw(frac_string_dna_chars dna_base_degen dna_iub_match);
 
 #   Constants for coloring scheme
-Readonly my $VERSION => "color_seq.pl V0.51; RTK 3/14/14";
+Readonly my $VERSION => "color_seq.pl V0.53; RTK 12/12/15";
 Readonly my $COLSCHEME_DEF  => 0;
 Readonly my $COLSCHEME_ABI  => 1;
 Readonly my $COLSCHEME_GC   => 2;
@@ -28,6 +29,9 @@ Readonly my $COLSCHEME_WIN  => 3;
 Readonly my $COLSCHEME_ONE  => 4;
 
 Readonly my $DEF_WINSIZE    => 5;
+Readonly my $DEF_RUNSIZE    => 3;
+
+Readonly my $CHAR_STATE     => 'bold';
 
 
 #   Supposed to make things nice with 'more' pager.... doesn't seem to matter!
@@ -48,7 +52,9 @@ sub col_seq_use
     print "  -win X     Color by windows of base type X (IUB is OK)\n";
     print "  -ws #      Window size #; Default is $DEF_WINSIZE\n";
     print "  -nacgt     Only color non-ACGT bases; IUB = red; Other = blue\n";
-    print "  -bc        Bold case (i.e. upper = bold, lower not)\n";
+    print "  -run       Only color runs of bases\n";
+    print "  -rs #      Run size #; Default is $DEF_RUNSIZE\n";
+    print "  -rnot      Run NOT; Invert run coloring so non-runs are colored\n";
     print "  -lw        Lowercase white (i.e. upper = color, lower no)\n";
     print "  -all       Color all lines; Default ignores fasta '>' and comment '#'\n";
     print "  -verb      Verbose; print color mapping\n";
@@ -70,10 +76,12 @@ sub col_seq_use
         'do_cabi'   => 0,
         'do_cgc'    => 0,
         'do_nacgt'   => 0,
-        'do_bc'     => 0,
         'do_lw'     => 0,
         'win_size'  => $DEF_WINSIZE,
         'col_win'   => '',
+        'do_run'    => 0,
+        'run_size'  => $DEF_RUNSIZE,
+        'do_rnot'   => 0,
         'do_all'    => 0,
         'verb'      => 0,
     };
@@ -84,11 +92,13 @@ sub col_seq_use
         'cabi'      => \$comargs->{do_cabi},
         'cgc'       => \$comargs->{do_cgc},
         'nacgt'     => \$comargs->{do_nacgt},
-        'bc'        => \$comargs->{do_bc},
         'lw'        => \$comargs->{do_lw},
         'win=s'     => \$comargs->{col_win},
         'ws=i'      => \$comargs->{win_size},
         'all'       => \$comargs->{do_all},
+        'run'       => \$comargs->{do_run},
+        'rs=i'      => \$comargs->{run_size},
+        'rnot'      => \$comargs->{do_rnot},
         );
 
     if ( ($help) || (!$options_ok) || ( (scalar @ARGV < 1)&&(!$do_stdin) ) ) {
@@ -273,14 +283,56 @@ sub dump_color_line
 sub dump_color_word
 {
     my ($word, $colormap, $comargs) = @_;
+    my $curcol;
+    #
+    # Get color list and any row-color shams
+    #
+    my $ccolist = get_word_char_colors($word, $colormap, $comargs);
+    my $runmask;
+    if ( $comargs->{do_run} ) {
+        $runmask = tally_color_run_mask($word, $comargs);
+    }
+    my $do_inv = $comargs->{do_rnot};
+    my $n = 0;
+    # Each char gets color; Reset start / end
+    print color('reset');
+    foreach my $lchar ( split //, $word ) {
+        $curcol = shift $ccolist;
+        # 
+        # Use color or background...?
+        #
+        if ( $comargs->{do_run} ) {
+            # Marked run but doing inverse color
+            if ( $runmask->[$n] && $do_inv ) {
+                $curcol = $colormap->{BackGrd};
+            }
+            # Not a run and not inverse color
+            if ( (! $runmask->[$n]) && (! $do_inv) ) {
+                $curcol = $colormap->{BackGrd};
+            }
+            $n++;
+        }
+        print color($CHAR_STATE, $curcol);
+        print $lchar;
+    }
+    print color('reset');
+    return;
+}
+
+###########################################################################
+#
+#   Get per-character color; Don't print
+#   Return reference to color array
+#
+sub get_word_char_colors
+{
+    my ($word, $colormap, $comargs) = @_;
     my ($colkey, $curcol);
-    my $char_state = 'bold';
     #
     #   A character at a time
     #
+    my @ccolist;
     foreach my $lchar ( split //, $word ) {
-        print color('reset');
-        $char_state = 'bold';
         $colkey = uc $lchar;     
         #
         #   Explicit color for key == normal DNA base
@@ -297,14 +349,9 @@ sub dump_color_word
             #   Case dependent shams?
             #
             if ( $lchar =~ m/[a-z]/x ) {
-                if ( $comargs->{do_bc} ) { 
-                    $char_state = '';
-                }
                 if ( $comargs->{do_lw} ) { 
-                    $char_state = '';
                     $curcol = 'white';
                 }
-
             }
         }
         #
@@ -324,11 +371,9 @@ sub dump_color_word
                 next;
             }
         }
-        print color($char_state, $curcol);
-        print $lchar;
+        push(@ccolist, $curcol);
     }
-    print color('reset');
-    return;
+    return \@ccolist;
 }
 
 ###########################################################################
@@ -338,8 +383,39 @@ sub dump_color_word
 sub color_word_wins
 {
     my ($word, $colormap, $comargs) = @_;
-    my $char_state = 'bold';
     my $curcol;
+
+    my ($hscore, $lscore) = tally_color_win_masks($word, $comargs);
+    #
+    #   Dump chars
+    #
+    my $n = 1;
+    foreach my $lchar ( split //, $word ) {
+        if ( $hscore->[$n] > 0 ) {
+            $curcol = $colormap->{'High'};
+        }
+        elsif ( $lscore->[$n] > 0 ) {
+            $curcol = $colormap->{'Low'};
+        }
+        else {
+            $curcol = $colormap->{'Mid'};
+        }
+        print color($CHAR_STATE, $curcol);
+        print $lchar;
+        $n++;
+    }
+    print color('reset');
+    return;
+}
+
+###########################################################################
+#
+#   Get per-character "score" masks for window marking
+#   Return reference to arrays
+#
+sub tally_color_win_masks
+{
+    my ($word, $comargs) = @_;
     my $col_win = $comargs->{col_win};
     my $win_size = $comargs->{win_size};
     #
@@ -381,26 +457,57 @@ sub color_word_wins
         $prev_h = $hscore[$n];
         $prev_l = $lscore[$n];
     }
+    return (\@hscore, \@lscore);
+}
+
+###########################################################################
+#   
+#   Get mask for run-based coloring
+#   Returns reference to array
+#
+sub tally_color_run_mask
+{
+    my ($word, $comargs) = @_;
+    my $min_run = $comargs->{run_size} - 1;
+    my @rmask;
     #
-    #   Dump chars
+    #   Forward pass, count max rows
     #
-    $n = 1;
+    my $row = 0;
+    my $prevch = '';
+    my $cchar;
     foreach my $lchar ( split //, $word ) {
-        if ( $hscore[$n] > 0 ) {
-            $curcol = $colormap->{'High'};
-        }
-        elsif ( $lscore[$n] > 0 ) {
-            $curcol = $colormap->{'Low'};
+        $cchar = uc $lchar;     
+        if ( $cchar eq $prevch ) {
+            $row ++;
         }
         else {
-            $curcol = $colormap->{'Mid'};
+            $row = 0;
         }
-        print color($char_state, $curcol);
-        print $lchar;
-        $n++;
+        $prevch = $cchar;
+        push(@rmask, $row);
     }
-    print color('reset');
-    return;
+    #
+    #   Second pass, cleaning and back filling rows 
+    #
+    my $n = scalar @rmask - 1;
+    while ( $n > 0 ) {
+        if ( $rmask[$n] >= $min_run ) {
+            $row = $rmask[$n];
+            while ( ($row >= 0) && ( $n >= 0 ) ) {
+                #print("X$n ");
+                $rmask[$n] = 1;
+                $n--;
+                $row--;
+            }
+        }
+        else {
+            #print("Y$n ");
+            $rmask[$n--] = 0;
+        }
+        #print("$n=$rmask[$n] ");
+    }
+    return \@rmask;
 }
 
 ###########################################################################
@@ -408,8 +515,7 @@ sub print_color_string
 {
     my $word = shift @_;
     my $color = shift @_;
-    my $char_state = 'bold';
-    print color($char_state, $color);
+    print color($CHAR_STATE, $color);
     print $word;
     print color('reset');
 }
