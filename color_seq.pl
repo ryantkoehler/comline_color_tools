@@ -9,6 +9,7 @@
 #       Also add -win X
 #   4/4/14 RTK V0.52; Rework with comarg
 #   12/12/15 RTK; RTK V0.53; Add -row stuff; Get rid of -bc so always "bold"
+#   12/24/15 RTK; RTK V0.54; Add -bran -rre
 #
 
 use strict;
@@ -21,7 +22,7 @@ use RTKUtil     qw(split_string);
 use DnaString   qw(frac_string_dna_chars dna_base_degen dna_iub_match);
 
 #   Constants for coloring scheme
-Readonly my $VERSION => "color_seq.pl V0.53; RTK 12/12/15";
+Readonly my $VERSION => "color_seq.pl V0.54; RTK 12/24/15";
 Readonly my $COLSCHEME_DEF  => 0;
 Readonly my $COLSCHEME_ABI  => 1;
 Readonly my $COLSCHEME_GC   => 2;
@@ -57,6 +58,8 @@ sub col_seq_use
     print "  -rnot      Run NOT; Invert run coloring so non-runs are colored\n";
     print "  -lw        Lowercase white (i.e. upper = color, lower no)\n";
     print "  -all       Color all lines; Default ignores fasta '>' and comment '#'\n";
+    print "  -bran # #  Limit base range # to #\n";
+    print "  -rre       Range relative to end; i.e. base range is backwards\n";
     print "  -verb      Verbose; print color mapping\n";
     print '=' x 77 . "\n";
     return;
@@ -83,6 +86,8 @@ sub col_seq_use
         'run_size'  => $DEF_RUNSIZE,
         'do_rnot'   => 0,
         'do_all'    => 0,
+        'bran'      => [],
+        'do_rre'    => 0,
         'verb'      => 0,
     };
     my $options_ok = GetOptions (
@@ -99,6 +104,8 @@ sub col_seq_use
         'run'       => \$comargs->{do_run},
         'rs=i'      => \$comargs->{run_size},
         'rnot'      => \$comargs->{do_rnot},
+        'bran=i{2}' => $comargs->{bran},
+        'rre'       => \$comargs->{do_rre},
         );
 
     if ( ($help) || (!$options_ok) || ( (scalar @ARGV < 1)&&(!$do_stdin) ) ) {
@@ -110,7 +117,6 @@ sub col_seq_use
         my $fname = shift @ARGV;
         open ($INFILE, '<', $fname ) or croak "Failed to open $fname\n", $!;
     }
-
     #
     #   Set up colors and report 
     #
@@ -253,7 +259,7 @@ sub get_color_map_hash
 
 ###########################################################################
 #
-#   Dump out one line with colored characters
+#   Dump out one line with (possibly) colored characters
 #
 sub dump_color_line
 {
@@ -277,6 +283,26 @@ sub dump_color_line
 }
 
 ###########################################################################
+sub word_bran_bounds
+{
+    my ($word, $comargs) = @_;
+    my $wordlen = length($word);
+    my $firstb = -1;
+    my $lastb = $wordlen;
+    if (scalar @{ $comargs->{bran}} >= 2) {
+        if ($comargs->{do_rre}) {
+            $firstb = $wordlen - $comargs->{bran}[1];
+            $lastb = $wordlen - $comargs->{bran}[0];
+        }
+        else {
+            $firstb = $comargs->{bran}[0] - 1;
+            $lastb = $comargs->{bran}[1] - 1;
+        }
+    }
+    #print("xxx $firstb, $lastb\n");
+    return ($firstb, $lastb);
+}
+###########################################################################
 #
 #   Dump out word with colored characters
 #
@@ -293,8 +319,9 @@ sub dump_color_word
         $runmask = tally_color_run_mask($word, $comargs);
     }
     my $do_inv = $comargs->{do_rnot};
-    my $n = 0;
+    my ($firstb, $lastb) = word_bran_bounds($word, $comargs);
     # Each char gets color; Reset start / end
+    my $n = 0;
     print color('reset');
     foreach my $lchar ( split //, $word ) {
         $curcol = shift $ccolist;
@@ -310,10 +337,14 @@ sub dump_color_word
             if ( (! $runmask->[$n]) && (! $do_inv) ) {
                 $curcol = $colormap->{BackGrd};
             }
-            $n++;
+        }
+        # Out of range?
+        if ( ($n < $firstb) || ($n > $lastb) ) {
+            $curcol = $colormap->{BackGrd};
         }
         print color($CHAR_STATE, $curcol);
         print $lchar;
+        $n++;
     }
     print color('reset');
     return;
@@ -386,6 +417,8 @@ sub color_word_wins
     my $curcol;
 
     my ($hscore, $lscore) = tally_color_win_masks($word, $comargs);
+    my ($firstb, $lastb) = word_bran_bounds($word, $comargs);
+    my ($firstb, $lastb) = word_bran_bounds($word, $comargs);
     #
     #   Dump chars
     #
@@ -399,6 +432,10 @@ sub color_word_wins
         }
         else {
             $curcol = $colormap->{'Mid'};
+        }
+        # Out of range?
+        if ( ($n < $firstb) || ($n > $lastb) ) {
+            $curcol = $colormap->{BackGrd};
         }
         print color($CHAR_STATE, $curcol);
         print $lchar;
