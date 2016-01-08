@@ -10,6 +10,7 @@
 #   4/4/14 RTK V0.52; Rework with comarg
 #   12/12/15 RTK; RTK V0.53; Add -row stuff; Get rid of -bc so always "bold"
 #   12/24/15 RTK; RTK V0.54; Add -bran -rre
+#   1/7/16 RTK; RTK V0.55; Add -cigv IGV color scheme
 #
 
 use strict;
@@ -22,12 +23,14 @@ use RTKUtil     qw(split_string);
 use DnaString   qw(frac_string_dna_chars dna_base_degen dna_iub_match);
 
 #   Constants for coloring scheme
-Readonly my $VERSION => "color_seq.pl V0.54; RTK 12/24/15";
-Readonly my $COLSCHEME_DEF  => 0;
+Readonly my $VERSION => "color_seq.pl V0.55; RTK 1/7/16";
+Readonly my $COLSCHEME_ORIG => 0;
 Readonly my $COLSCHEME_ABI  => 1;
-Readonly my $COLSCHEME_GC   => 2;
-Readonly my $COLSCHEME_WIN  => 3;
-Readonly my $COLSCHEME_ONE  => 4;
+Readonly my $COLSCHEME_IGV  => 2;
+Readonly my $COLSCHEME_GC   => 3;
+Readonly my $COLSCHEME_WIN  => 4;
+Readonly my $COLSCHEME_ONE  => 5;
+Readonly my $COLSCHEME_DEF  => $COLSCHEME_ORIG;
 
 Readonly my $DEF_WINSIZE    => 5;
 Readonly my $DEF_RUNSIZE    => 3;
@@ -49,6 +52,8 @@ sub col_seq_use
     print "Usage: <infile> ['-' for stdin] [...options]\n";
     print "  <infile>   Sequence file\n";
     print "  -cabi      Color scheme 'ABI' style\n";
+    print "  -cigv      Color scheme 'IGV' style\n";
+    print "  -corig     Color scheme 'original' style\n";
     print "  -cgc       Color scheme GC-warm / AT-cool style\n";
     print "  -win X     Color by windows of base type X (IUB is OK)\n";
     print "  -ws #      Window size #; Default is $DEF_WINSIZE\n";
@@ -77,8 +82,10 @@ sub col_seq_use
     my $do_stdin = 0;
     my $comargs = {
         'do_cabi'   => 0,
+        'do_cigv'   => 0,
+        'do_corg'   => 0,
         'do_cgc'    => 0,
-        'do_nacgt'   => 0,
+        'do_nacgt'  => 0,
         'do_lw'     => 0,
         'win_size'  => $DEF_WINSIZE,
         'col_win'   => '',
@@ -95,6 +102,8 @@ sub col_seq_use
         'help'      => \$help,
         'verb'      => \$comargs->{verbose},
         'cabi'      => \$comargs->{do_cabi},
+        'cigv'      => \$comargs->{do_cigv},
+        'corg'      => \$comargs->{do_corg},
         'cgc'       => \$comargs->{do_cgc},
         'nacgt'     => \$comargs->{do_nacgt},
         'lw'        => \$comargs->{do_lw},
@@ -189,6 +198,12 @@ sub set_up_colors
     elsif ( $comargs->{do_cabi} ) {
         $colscheme = $COLSCHEME_ABI;
     }
+    elsif ( $comargs->{do_corg} ) {
+        $colscheme = $COLSCHEME_ORIG;
+    }
+    elsif ( $comargs->{do_cigv} ) {
+        $colscheme = $COLSCHEME_IGV;
+    }
     elsif ( $comargs->{do_cgc} ) {
         $colscheme = $COLSCHEME_GC;
     }
@@ -227,6 +242,17 @@ sub get_color_map_hash
         };
     }
     #
+    #   IGV display style
+    #
+    elsif ( $scheme == $COLSCHEME_IGV ) {
+        $colormap = {
+        'A' => 'green', 
+        'C' => 'blue', 
+        'G' => 'yellow', 
+        'T' => 'red', 
+        };
+    }
+    #
     #   GC warm, AT cool 
     #
     elsif ( $scheme == $COLSCHEME_GC ) {
@@ -238,15 +264,19 @@ sub get_color_map_hash
         };
     }
     #
-    #   Default
+    #   Original colors 
     #
-    else {
+    elsif ( $scheme == $COLSCHEME_ORIG ) {
         $colormap = {
         'A' => 'green', 
         'C' => 'red', 
         'G' => 'blue', 
         'T' => 'yellow', 
         };
+    }
+    else {
+        print "SHAM $scheme";
+        return 0;
     }
     #
     #   Default non-base colors
@@ -299,7 +329,6 @@ sub word_bran_bounds
             $lastb = $comargs->{bran}[1] - 1;
         }
     }
-    #print("xxx $firstb, $lastb\n");
     return ($firstb, $lastb);
 }
 ###########################################################################
@@ -398,8 +427,7 @@ sub get_word_char_colors
                 }
             }
             else {
-                print $lchar;
-                next;
+                $curcol = $colormap->{BackGrd};
             }
         }
         push(@ccolist, $curcol);
@@ -417,7 +445,6 @@ sub color_word_wins
     my $curcol;
 
     my ($hscore, $lscore) = tally_color_win_masks($word, $comargs);
-    my ($firstb, $lastb) = word_bran_bounds($word, $comargs);
     my ($firstb, $lastb) = word_bran_bounds($word, $comargs);
     #
     #   Dump chars
