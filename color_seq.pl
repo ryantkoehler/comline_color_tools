@@ -11,6 +11,7 @@
 #   12/12/15 RTK; RTK V0.53; Add -row stuff; Get rid of -bc so always "bold"
 #   12/24/15 RTK; RTK V0.54; Add -bran -rre
 #   1/7/16 RTK; RTK V0.55; Add -cigv IGV color scheme
+#   1/17/16 RTK; RTK V0.56; Generalize -not (from -rnot) to Run or Range
 #
 
 use strict;
@@ -23,7 +24,7 @@ use RTKUtil     qw(split_string);
 use DnaString   qw(frac_string_dna_chars dna_base_degen dna_iub_match);
 
 #   Constants for coloring scheme
-Readonly my $VERSION => "color_seq.pl V0.55; RTK 1/7/16";
+Readonly my $VERSION => "color_seq.pl V0.56; RTK 1/17/16";
 Readonly my $COLSCHEME_ORIG => 0;
 Readonly my $COLSCHEME_ABI  => 1;
 Readonly my $COLSCHEME_IGV  => 2;
@@ -60,11 +61,11 @@ sub col_seq_use
     print "  -nacgt     Only color non-ACGT bases; IUB = red; Other = blue\n";
     print "  -run       Only color runs of bases\n";
     print "  -rs #      Run size #; Default is $DEF_RUNSIZE\n";
-    print "  -rnot      Run NOT; Invert run coloring so non-runs are colored\n";
     print "  -lw        Lowercase white (i.e. upper = color, lower no)\n";
     print "  -all       Color all lines; Default ignores fasta '>' and comment '#'\n";
     print "  -bran # #  Limit base range # to #\n";
     print "  -rre       Range relative to end; i.e. base range is backwards\n";
+    print "  -not       NOT; Invert coloring so non-runs / out-of-range colored\n";
     print "  -verb      Verbose; print color mapping\n";
     print '=' x 77 . "\n";
     return;
@@ -91,7 +92,7 @@ sub col_seq_use
         'col_win'   => '',
         'do_run'    => 0,
         'run_size'  => $DEF_RUNSIZE,
-        'do_rnot'   => 0,
+        'do_not'   => 0,
         'do_all'    => 0,
         'bran'      => [],
         'do_rre'    => 0,
@@ -112,7 +113,7 @@ sub col_seq_use
         'all'       => \$comargs->{do_all},
         'run'       => \$comargs->{do_run},
         'rs=i'      => \$comargs->{run_size},
-        'rnot'      => \$comargs->{do_rnot},
+        'not'       => \$comargs->{do_not},
         'bran=i{2}' => $comargs->{bran},
         'rre'       => \$comargs->{do_rre},
         );
@@ -338,7 +339,7 @@ sub word_bran_bounds
 sub dump_color_word
 {
     my ($word, $colormap, $comargs) = @_;
-    my $curcol;
+    my ($curcol, $do_bkgd);
     #
     # Get color list and any row-color shams
     #
@@ -347,30 +348,26 @@ sub dump_color_word
     if ( $comargs->{do_run} ) {
         $runmask = tally_color_run_mask($word, $comargs);
     }
-    my $do_inv = $comargs->{do_rnot};
+    my $do_inv = $comargs->{do_not};
     my ($firstb, $lastb) = word_bran_bounds($word, $comargs);
     # Each char gets color; Reset start / end
     my $n = 0;
     print color('reset');
     foreach my $lchar ( split //, $word ) {
         $curcol = shift $ccolist;
-        # 
-        # Use color or background...?
-        #
-        if ( $comargs->{do_run} ) {
-            # Marked run but doing inverse color
-            if ( $runmask->[$n] && $do_inv ) {
-                $curcol = $colormap->{BackGrd};
-            }
-            # Not a run and not inverse color
-            if ( (! $runmask->[$n]) && (! $do_inv) ) {
-                $curcol = $colormap->{BackGrd};
-            }
+        $do_bkgd = 0; 
+        # Marked run ?
+        if (($comargs->{do_run} ) && ( ! $runmask->[$n] )) {
+            $do_bkgd = 1;
         }
         # Out of range?
-        if ( ($n < $firstb) || ($n > $lastb) ) {
-            $curcol = $colormap->{BackGrd};
+        if (($n < $firstb) || ($n > $lastb)) {
+            $do_bkgd = 1;
         }
+        # Inverse color qualification?
+        $do_bkgd = $do_inv ? (!$do_bkgd) : ($do_bkgd);
+        # Background or color?
+        $curcol = $do_bkgd ? $colormap->{BackGrd} : $curcol;
         print color($CHAR_STATE, $curcol);
         print $lchar;
         $n++;
