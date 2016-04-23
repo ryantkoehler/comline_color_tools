@@ -1,8 +1,10 @@
 comline_color_tools
 =====================
 5/27/14 RTK
-1/15/15 RTK (update; Renamed from comline_color__seq_num)
-3/31/15 RTK (update color_cols.pl)
+1/15/15 RTK (update; Renamed from comline color seq num)
+3/31/15 RTK (update color cols.pl)
+4/8/16 RTK; Update color_seq to support lowercase and not (inverse)
+4/23/16 RTK; Update color_seq: Add -cran to restrict columns; Fix off-by-one bug with -bran
 
 Command line tools to (ANSI) colorize DNA sequences (bioinformatics) or numbers (data analysis) found within text.
 
