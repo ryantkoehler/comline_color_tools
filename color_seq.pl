@@ -14,7 +14,7 @@
 #   1/17/16 RTK; RTK V0.56; Generalize -not (from -rnot) to Run or Range
 #   1/31/16 RTK; Fix -bran off-by-one sham (maybe new?)
 #   4/7/16 RTK V0.57; Make lowercase work with not (inversion)
-#   4/23/16 RTK V0.58; Add -cran and fix off-by-one with -bran
+#   4/23/16 RTK V0.58; Add -col and fix off-by-one with -bran
 #
 
 use strict;
@@ -66,10 +66,10 @@ sub col_seq_use
     print "  -rs #      Run size #; Default is $DEF_RUNSIZE\n";
     print "  -lw        Lowercase ignored (i.e. upper = color, lower no)\n";
     print "  -all       Color all lines; Default ignores fasta '>' and comment '#'\n";
-    print "  -cran # #  Limit coloring to columns # to #\n";
+    print "  -col # #   Limit coloring to columns # to #\n";
     print "  -bran # #  Limit base range # to # (1-base coords)\n";
     print "  -rre       Range relative to end; i.e. base range is backwards\n";
-    print "  -not       NOT; Invert coloring so non-runs / out-of-range colored\n";
+    print "  -not       NOT; Invert coloring so non-runs / out-of-base-range colored\n";
     print "  -verb      Verbose; print color mapping\n";
     print '=' x 77 . "\n";
     return;
@@ -98,7 +98,7 @@ sub col_seq_use
         'run_size'  => $DEF_RUNSIZE,
         'do_not'   => 0,
         'do_all'    => 0,
-        'cran'      => [],
+        'cols'      => [],
         'bran'      => [],
         'do_rre'    => 0,
         'verb'      => 0,
@@ -119,7 +119,7 @@ sub col_seq_use
         'run'       => \$comargs->{do_run},
         'rs=i'      => \$comargs->{run_size},
         'not'       => \$comargs->{do_not},
-        'cran=i{2}' => $comargs->{cran},
+        'cols=i{2}' => $comargs->{cols},
         'bran=i{2}' => $comargs->{bran},
         'rre'       => \$comargs->{do_rre},
         );
@@ -337,8 +337,8 @@ sub word_color_column
 {
     my ($w, $comargs) = @_;
 
-    if (scalar @{ $comargs->{cran}} >= 2) {
-        if (( $w < $comargs->{cran}[0]) || ($w > $comargs->{cran}[1])) {
+    if (scalar @{ $comargs->{cols}} >= 2) {
+        if (( $w < $comargs->{cols}[0]) || ($w > $comargs->{cols}[1])) {
             return 0;
         }
     }
