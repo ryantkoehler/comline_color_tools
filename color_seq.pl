@@ -13,8 +13,7 @@
 #   1/7/16 RTK; V0.55; Add -cigv IGV color scheme
 #   1/17/16 RTK; RTK V0.56; Generalize -not (from -rnot) to Run or Range
 #   1/31/16 RTK; Fix -bran off-by-one sham (maybe new?)
-#   4/7/16 RTK V0.57; Make lowercase work with not (inversion)
-#   4/23/16 RTK V0.58; Add -col and fix off-by-one with -bran
+#   5/29/16 RTK; Fix -bran off-by-one sham (Works now!)
 #
 
 use strict;
@@ -27,7 +26,7 @@ use RTKUtil     qw(split_string);
 use DnaString   qw(frac_string_dna_chars dna_base_degen dna_iub_match);
 
 #   Constants for coloring scheme
-Readonly my $VERSION => "color_seq.pl V0.58; RTK 4/23/16";
+Readonly my $VERSION => "color_seq.pl V0.57; RTK 5/29/16";
 Readonly my $COLSCHEME_ORIG => 0;
 Readonly my $COLSCHEME_ABI  => 1;
 Readonly my $COLSCHEME_IGV  => 2;
@@ -40,7 +39,6 @@ Readonly my $DEF_WINSIZE    => 5;
 Readonly my $DEF_RUNSIZE    => 3;
 
 Readonly my $CHAR_STATE     => 'bold';
-
 
 #   Supposed to make things nice with 'more' pager.... doesn't seem to matter!
 $Term::ANSIColor::AUTORESET = 1;
@@ -64,12 +62,11 @@ sub col_seq_use
     print "  -nacgt     Only color non-ACGT bases; IUB = red; Other = blue\n";
     print "  -run       Only color runs of bases\n";
     print "  -rs #      Run size #; Default is $DEF_RUNSIZE\n";
-    print "  -lw        Lowercase ignored (i.e. upper = color, lower no)\n";
+    print "  -lw        Lowercase white (i.e. upper = color, lower no)\n";
     print "  -all       Color all lines; Default ignores fasta '>' and comment '#'\n";
-    print "  -col # #   Limit coloring to columns # to #\n";
     print "  -bran # #  Limit base range # to # (1-base coords)\n";
     print "  -rre       Range relative to end; i.e. base range is backwards\n";
-    print "  -not       NOT; Invert coloring so non-runs / out-of-base-range colored\n";
+    print "  -not       NOT; Invert coloring so non-runs / out-of-range colored\n";
     print "  -verb      Verbose; print color mapping\n";
     print '=' x 77 . "\n";
     return;
@@ -98,7 +95,6 @@ sub col_seq_use
         'run_size'  => $DEF_RUNSIZE,
         'do_not'   => 0,
         'do_all'    => 0,
-        'cols'      => [],
         'bran'      => [],
         'do_rre'    => 0,
         'verb'      => 0,
@@ -119,7 +115,6 @@ sub col_seq_use
         'run'       => \$comargs->{do_run},
         'rs=i'      => \$comargs->{run_size},
         'not'       => \$comargs->{do_not},
-        'cols=i{2}' => $comargs->{cols},
         'bran=i{2}' => $comargs->{bran},
         'rre'       => \$comargs->{do_rre},
         );
@@ -302,20 +297,7 @@ sub dump_color_line
 {
     my ($line, $colormap, $comargs) = @_;
     my $tokens = split_string($line);
-    my $w = 0;
     foreach my $word ( @{$tokens} ) {
-        # blank == spacing
-        if ( $word =~ m/^\s*$/ ) {   
-            print $word;
-            next;
-        }
-        # Only real words count; Check if column in range
-        $w ++;
-        if (! word_color_column($w, $comargs)) {
-            print $word;
-            next;
-        }
-        # Get fraction of word "base-letters" to decide color / not
         my $frac = frac_string_dna_chars($word);
         if ( $frac > 0.5 ) {
             if ( $comargs->{col_win} ) {
@@ -333,18 +315,6 @@ sub dump_color_line
 }
 
 ###########################################################################
-sub word_color_column
-{
-    my ($w, $comargs) = @_;
-
-    if (scalar @{ $comargs->{cols}} >= 2) {
-        if (( $w < $comargs->{cols}[0]) || ($w > $comargs->{cols}[1])) {
-            return 0;
-        }
-    }
-    return 1;
-}
-###########################################################################
 sub word_bran_bounds
 {
     my ($word, $comargs) = @_;
@@ -353,16 +323,15 @@ sub word_bran_bounds
     my $lastb = $wordlen;
     if (scalar @{ $comargs->{bran}} >= 2) {
         if ($comargs->{do_rre}) {
-            $firstb = $wordlen - $comargs->{bran}[1] + 1;
-            $lastb = $wordlen - $comargs->{bran}[0] + 1;
+            $firstb = $wordlen - $comargs->{bran}[1];
+            $lastb = $wordlen - $comargs->{bran}[0];
         }
         else {
-            $firstb = $comargs->{bran}[0];
-            $lastb = $comargs->{bran}[1];
+            $firstb = $comargs->{bran}[0] -1;
+            $lastb = $comargs->{bran}[1] -1;
         }
     }
-    # Fix off-by 1 sham
-    return ($firstb - 1, $lastb - 1);
+    return ($firstb, $lastb);
 }
 ###########################################################################
 #
@@ -394,10 +363,6 @@ sub dump_color_word
         }
         # Out of range?
         if (($n < $firstb) || ($n > $lastb)) {
-            $do_bkgd = 1;
-        }
-        # Lowercase?
-        if (( $comargs->{do_lw} ) && ( $lchar =~ m/[a-z]/x )) {
             $do_bkgd = 1;
         }
         # Inverse color qualification?
@@ -437,6 +402,14 @@ sub get_word_char_colors
             #
             if ( $comargs->{do_nacgt} ) {
                 $curcol = $colormap->{BackGrd};
+            }
+            #
+            #   Case dependent shams?
+            #
+            if ( $lchar =~ m/[a-z]/x ) {
+                if ( $comargs->{do_lw} ) { 
+                    $curcol = 'white';
+                }
             }
         }
         #
