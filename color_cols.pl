@@ -4,6 +4,7 @@
 #   3/21/15 RTK; V0.2; Add -2c and default to -10c
 #   4/28/15 RTK; V0.3; Add -tab separation option
 #   9/28/15 RTK; V0.31; Fix bug with -s and -5c; Update on github
+#   7/7/16 RTK; V0.32; Change -col to -rg for consistency; Update so 5 5 = col5
 #
 
 use strict;
@@ -40,7 +41,7 @@ sub col_cols_use
     print "  <infile>   Text file (e.g. data with 'word' tokens)\n";
     print "  -m #       Mark col # (Note: 1-based index on tokens)\n";
     print "  -s #       Step; Mark every #'th col\n";
-    print "  -col # #   Limit coloring to cols # to #\n";
+    print "  -rg # #    Limit coloring to col range # to #\n";
     print "  -tab       Separate columns by tab (default is space)\n";
     print "  -not       Invert col qualifications\n";
     print "  -2c        Two color scheme:  Cycle ";
@@ -85,7 +86,7 @@ sub col_cols_use
         '5c'        => \$comargs->{do_5c},
         '10c'       => \$comargs->{do_10c},
         'all'       => \$comargs->{do_all},
-        'col=i{2}'  => $comargs->{sub_cols},
+        'rg=i{2}'   => $comargs->{sub_cols},
         'not'       => \$comargs->{do_not},
         'tab'       => \$comargs->{do_tab},
         );
@@ -145,8 +146,7 @@ sub set_up_options
 
     # If marking one col, put this value into the range structure
     if ($comargs->{cmark} > 0) {
-        @{ $comargs->{sub_cols}}[0] = $comargs->{cmark};
-        @{ $comargs->{sub_cols}}[1] = $comargs->{cmark} + 1;
+        @{ $comargs->{sub_cols}}[0] = @{ $comargs->{sub_cols}}[1] = $comargs->{cmark};
     }
 
     # If -2c or -5c or specific mark, turn off -10c coloring; Else on by default
