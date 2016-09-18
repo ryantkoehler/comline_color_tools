@@ -5,6 +5,8 @@ comline_color_tools
 3/31/15 RTK (update color cols.pl)
 4/8/16 RTK; Update color_seq to support lowercase and not (inverse)
 4/23/16 RTK; Update color_seq: Add -cran to restrict columns; Fix off-by-one bug with -bran
+9/18/16 RTK; Update color_cols; Add support for rows and row differences, explicit fg bg colors
+
 
 Command line tools to (ANSI) colorize DNA sequences (bioinformatics) or numbers (data analysis) found within text.
 
@@ -12,7 +14,7 @@ Command line tools to (ANSI) colorize DNA sequences (bioinformatics) or numbers 
 
     color_nums.pl       Color numbers within text
 
-    color_cols.pl       Color specific columns within text
+    color_cols.pl       Color specific columns / rows within text
 
 =====================
 Background and overview
