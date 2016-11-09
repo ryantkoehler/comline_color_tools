@@ -11,6 +11,7 @@
 #   8/30/16 RTK; V0.41; Add -prd -pld ('comargs' should be a class ...)
 #   9/16/16 RTK; V0.5; Add -10r and make this default; Add -rr and change
 #       -rg to -cr; Add -iv; Split -not into -nc and -nr
+#   11/9/16 RTK; V0.51; Fix off-by-one for column coloring
 #
 
 use strict;
@@ -55,8 +56,8 @@ sub col_cols_use
     print "  -nc        Invert column range qualifications\n";
     print "  -rr # #    Rows in range # to # colored (1-based)\n";
     print "  -nr        Invert row range qualifications\n";
-    print "  -tab       Separate columns by tab (default is space)\n";
-    print "  -sep X     Separate columns by X string\n";
+    print "  -tab       Separate input columns by tab (default is space)\n";
+    print "  -sep X     Separate input columns by X string\n";
     print "  -2c        Two color scheme:    Cycle ";
     print_color_scheme_nums($comargs, $COLSCHEME_2, 10);
     print "  -5c        Five color scheme:   Cycle ";
@@ -560,7 +561,8 @@ sub dump_color_col_line
     my ($comargs, $line, $lnum) = @_;
 
     my $char_state = 'bold';
-    my $col = 0;
+    # Start at col 1; Increment on separators _after_ first col
+    my $col = 1;
     my $tokens = tokens_for_line($comargs, $line);
     # Process each 'word' 
     foreach my $word ( @{$tokens} ) {
