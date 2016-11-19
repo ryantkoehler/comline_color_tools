@@ -12,6 +12,7 @@
 #   9/16/16 RTK; V0.5; Add -10r and make this default; Add -rr and change
 #       -rg to -cr; Add -iv; Split -not into -nc and -nr
 #   11/9/16 RTK; V0.51; Fix off-by-one for column coloring
+#   11/18/16 RTK; V0.52; Fix sham with leading spaces for column coloring
 #
 
 use strict;
@@ -22,7 +23,7 @@ use Readonly;
 use Carp;
 use RTKUtil     qw(split_string);
 
-Readonly my $VERSION => "color_cols.pl V0.5; RTK 9/16/16";
+Readonly my $VERSION => "color_cols.pl V0.52; RTK 11/18/16";
 
 Readonly my $COLSCHEME_2    => '2c';
 Readonly my $COLSCHEME_5    => '5c';
@@ -561,12 +562,16 @@ sub dump_color_col_line
     my ($comargs, $line, $lnum) = @_;
 
     my $char_state = 'bold';
-    # Start at col 1; Increment on separators _after_ first col
-    my $col = 1;
     my $tokens = tokens_for_line($comargs, $line);
+    # Start at col 1; Increment on separators _after_ first _print_ col
+    my $col = 1;
+    my $pw = 0;
     # Process each 'word' 
     foreach my $word ( @{$tokens} ) {
-        if ( $word =~ m/$comargs->{sep_str}/ ) {
+        if ( $word =~ m/^\S+$/ ) {
+            $pw++;
+        }
+        if (( $word =~ m/$comargs->{sep_str}/ ) && ( $pw > 0 )) {
             $col++;
         }
         my $col_ok = is_col_in_range($comargs, $col);
@@ -619,8 +624,8 @@ sub print_color_scheme_nums
             }
         }
     }
-    print color('reset');
     print "\n";
+    set_bold_white();
     return $num;
 }
 
@@ -635,3 +640,7 @@ sub print_color_string
     print color('reset');
 }
 
+sub set_bold_white
+{
+    print color('bold', 'white');
+}

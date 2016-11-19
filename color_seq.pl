@@ -14,6 +14,7 @@
 #   1/17/16 RTK; RTK V0.56; Generalize -not (from -rnot) to Run or Range
 #   1/31/16 RTK; Fix -bran off-by-one sham (maybe new?)
 #   5/29/16 RTK; Fix -bran off-by-one sham (Works now!)
+#   11/18/16 RTK; Replace reset() with set_bold_white() 
 #
 
 use strict;
@@ -26,7 +27,7 @@ use RTKUtil     qw(split_string);
 use DnaString   qw(frac_string_dna_chars dna_base_degen dna_iub_match);
 
 #   Constants for coloring scheme
-Readonly my $VERSION => "color_seq.pl V0.57; RTK 5/29/16";
+Readonly my $VERSION => "color_seq.pl V0.58; RTK 11/18/16";
 Readonly my $COLSCHEME_ORIG => 0;
 Readonly my $COLSCHEME_ABI  => 1;
 Readonly my $COLSCHEME_IGV  => 2;
@@ -373,7 +374,8 @@ sub dump_color_word
         print $lchar;
         $n++;
     }
-    print color('reset');
+    #print color('reset');
+    set_bold_white();
     return;
 }
 
@@ -466,7 +468,8 @@ sub color_word_wins
         print $lchar;
         $n++;
     }
-    print color('reset');
+    #print color('reset');
+    set_bold_white();
     return;
 }
 
@@ -580,5 +583,10 @@ sub print_color_string
     print color($CHAR_STATE, $color);
     print $word;
     print color('reset');
+}
+
+sub set_bold_white
+{
+    print color('bold', 'white');
 }
 

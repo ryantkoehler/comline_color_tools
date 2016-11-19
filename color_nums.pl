@@ -3,6 +3,7 @@
 #   Ryan Koehler 3/17/14; Modified from color_seq.pl
 #   4/4/14 RTK V0.2; Update with comargs 
 #   5/15/14 RTK V0.21; Add -iz
+#   11/18/16 RTK; Replace reset() with set_bold_white()
 #
 
 use strict;
@@ -13,7 +14,7 @@ use Readonly;
 use Carp;
 use RTKUtil     qw(split_string);
 
-Readonly my $VERSION => "color_nums.pl V0.21; RTK 4/4/14";
+Readonly my $VERSION => "color_nums.pl V0.22; RTK 11/18/16";
 
 #   Constants for coloring scheme
 Readonly my $COLSCHEME_DEF  => 0;
@@ -371,11 +372,13 @@ sub dump_color_line
             print $word;
         }
         else {
-            print color('reset');
+            ##print color('reset');
+            set_bold_white();
             print $word;
         }
     }
-    print color('reset');
+    #print color('reset');
+    set_bold_white();
 }
 
 ###########################################################################
@@ -389,3 +392,7 @@ sub print_color_string
     print color('reset');
 }
 
+sub set_bold_white
+{
+    print color('bold', 'white');
+}
