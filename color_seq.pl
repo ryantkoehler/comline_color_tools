@@ -14,6 +14,9 @@
 #   1/17/16 RTK; RTK V0.56; Generalize -not (from -rnot) to Run or Range
 #   1/31/16 RTK; Fix -bran off-by-one sham (maybe new?)
 #   5/29/16 RTK; Fix -bran off-by-one sham (Works now!)
+#   11/18/16 RTK; Replace reset() with set_bold_white() 
+#   10/7/17 v0.59 RTK; Change 'shift' on ccolist ref to avoid warning; 
+#       Fix but with -nacgt
 #
 
 use strict;
@@ -26,7 +29,7 @@ use RTKUtil     qw(split_string);
 use DnaString   qw(frac_string_dna_chars dna_base_degen dna_iub_match);
 
 #   Constants for coloring scheme
-Readonly my $VERSION => "color_seq.pl V0.57; RTK 5/29/16";
+Readonly my $VERSION => "color_seq.pl V0.59; RTK 10/7/17";
 Readonly my $COLSCHEME_ORIG => 0;
 Readonly my $COLSCHEME_ABI  => 1;
 Readonly my $COLSCHEME_IGV  => 2;
@@ -55,7 +58,7 @@ sub col_seq_use
     print "  <infile>   Sequence file\n";
     print "  -cabi      Color scheme 'ABI' style\n";
     print "  -cigv      Color scheme 'IGV' style\n";
-    print "  -corig     Color scheme 'original' style\n";
+    print "  -corg      Color scheme 'original' style\n";
     print "  -cgc       Color scheme GC-warm / AT-cool style\n";
     print "  -win X     Color by windows of base type X (IUB is OK)\n";
     print "  -ws #      Window size #; Default is $DEF_WINSIZE\n";
@@ -276,6 +279,13 @@ sub get_color_map_hash
         'T' => 'yellow', 
         };
     }
+    #
+    #   non-ACGT case
+    #
+    elsif ( $scheme == $COLSCHEME_ONE ) {
+        $colormap = {
+        };
+    }
     else {
         print "SHAM $scheme";
         return 0;
@@ -355,7 +365,9 @@ sub dump_color_word
     my $n = 0;
     print color('reset');
     foreach my $lchar ( split //, $word ) {
-        $curcol = shift $ccolist;
+        # 'shift' directly on ref yields warning; cast to array
+        #$curcol = shift $ccolist;
+        $curcol = shift @{ $ccolist };
         $do_bkgd = 0; 
         # Marked run ?
         if (($comargs->{do_run} ) && ( ! $runmask->[$n] )) {
@@ -373,7 +385,8 @@ sub dump_color_word
         print $lchar;
         $n++;
     }
-    print color('reset');
+    #print color('reset');
+    set_bold_white();
     return;
 }
 
@@ -466,7 +479,8 @@ sub color_word_wins
         print $lchar;
         $n++;
     }
-    print color('reset');
+    #print color('reset');
+    set_bold_white();
     return;
 }
 
@@ -580,5 +594,10 @@ sub print_color_string
     print color($CHAR_STATE, $color);
     print $word;
     print color('reset');
+}
+
+sub set_bold_white
+{
+    print color('bold', 'white');
 }
 
