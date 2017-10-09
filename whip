@@ -1,0 +1,116 @@
+[1m[31mUSAGE: PicardCommandLine [32m<program name>[1m[31m [-h]
+
+[0m[1m[31mAvailable Programs:
+[0m[37m--------------------------------------------------------------------------------------
+[0m[31mAlpha Tools:                                     Tools that are currently UNSUPPORTED until further testing and maturation.[0m
+[32m    CheckFingerprint                             [36mComputes a fingerprint from the supplied SAM/BAM file and compares it to the provided genotypes[0m
+[32m    CrosscheckReadGroupFingerprints              [36mChecks if all read groups appear to come from the same individual[0m
+
+[37m--------------------------------------------------------------------------------------
+[0m[31mFasta:                                           Tools for manipulating FASTA, or related data.[0m
+[32m    CreateSequenceDictionary                     [36mCreates a sequence dictionary for a reference sequence.  [0m
+[32m    ExtractSequences                             [36mSubsets intervals from a reference sequence to a new FASTA file.[0m
+[32m    NonNFastaSize                                [36mCounts the number of non-N bases in a fasta file.[0m
+[32m    NormalizeFasta                               [36mNormalizes lines of sequence in a FASTA file to be of the same length.[0m
+
+[37m--------------------------------------------------------------------------------------
+[0m[31mIllumina Tools:                                  Tools for manipulating data specific to Illumina sequencers.[0m
+[32m    CheckIlluminaDirectory                       [36mAsserts the validity of the data in the specified Illumina basecalling data[0m
+[32m    CollectIlluminaBasecallingMetrics            [36mGiven an Illumina basecalling and a lane, produces per-lane-barcode basecalling metrics[0m
+[32m    CollectIlluminaLaneMetrics                   [36mCollects Illumina lane metrics for the given basecalling analysis directory[0m
+[32m    ExtractIlluminaBarcodes                      [36mTool to determine the barcode for each read in an Illumina lane[0m
+[32m    IlluminaBasecallsToFastq                     [36mGenerate fastq file(s) from data in an Illumina basecalls output directory[0m
+[32m    IlluminaBasecallsToSam                       [36mGenerate a SAM or BAM file from data in an Illumina basecalls output directory[0m
+[32m    MarkIlluminaAdapters                         [36mReads a SAM or BAM file and rewrites it with new adapter-trimming tags[0m
+
+[37m--------------------------------------------------------------------------------------
+[0m[31mInterval Tools:                                  Tools for manipulating Picard interval lists.[0m
+[32m    BedToIntervalList                            [36mConverts a BED file to a Picard Interval List.  [0m
+[32m    IntervalListToBed                            [36mConverts an Picard IntervalList file to a BED file.[0m
+[32m    IntervalListTools                            [36mManipulates interval lists.  [0m
+[32m    LiftOverIntervalList                         [36mLifts over an interval list from one reference build to another.  [0m
+[32m    ScatterIntervalsByNs                         [36mWrites an interval list based on splitting the reference by Ns.  [0m
+
+[37m--------------------------------------------------------------------------------------
+[0m[31mMetrics:                                         Tools for reporting metrics on various data types.[0m
+[32m    CalculateHsMetrics                           [36mDEPRECATED: Use CollectHsMetrics instead.[0m
+[32m    CollectAlignmentSummaryMetrics               [36mProduce a summary of alignment metrics from a SAM or BAM file[0m
+[32m    CollectBaseDistributionByCycle               [36mChart the nucleotide distribution per cycle in a SAM or BAM file[0m
+[32m    CollectGcBiasMetrics                         [36mCollect metrics regarding GC bias. [0m
+[32m    CollectHiSeqXPfFailMetrics                   [36mClassify PF-Failing reads in a HiSeqX Illumina Basecalling directory into various categories.[0m
+[32m    CollectHsMetrics                             [36mCollects Hybrid Selection-specific metrics for a SAM or BAM file[0m
+[32m    CollectInsertSizeMetrics                     [36mCollect metrics about the insert size distribution of a paired-end library.[0m
+[32m    CollectJumpingLibraryMetrics                 [36mCollect jumping library metrics. [0m
+[32m    CollectMultipleMetrics                       [36mCollect multiple classes of metrics.  [0m
+[32m    CollectOxoGMetrics                           [36mCollect metrics to assess oxidative artifacts.[0m
+[32m    CollectQualityYieldMetrics                   [36mCollect metrics about reads that pass quality thresholds and Illumina-specific filters.  [0m
+[32m    CollectRawWgsMetrics                         [36mCollect whole genome sequencing-related metrics.  [0m
+[32m    CollectRnaSeqMetrics                         [36mProduces RNA alignment metrics for a SAM or BAM file[0m
+[32m    CollectRrbsMetrics                           [36mCollect metrics from reduced representation bisulfite sequencing (RRBS) data.  [0m
+[32m    CollectSequencingArtifactMetrics             [36mCollect metrics to quantify single-base sequencing artifacts.[0m
+[32m    CollectTargetedPcrMetrics                    [36mCalculate PCR-related metrics from targeted sequencing data. [0m
+[32m    CollectVariantCallingMetrics                 [36mCollects per-sample and aggregate (spanning all samples) metrics from the provided VCF file[0m
+[32m    CollectWgsMetrics                            [36mCollect metrics about coverage and performance of whole genome sequencing (WGS) experiments.[0m
+[32m    CollectWgsMetricsFromQuerySorted             [36mWrites sequencing-related metrics for a SAM or BAM file[0m
+[32m    CollectWgsMetricsFromSampledSites            [36mWrites whole genome sequencing-related metrics for a SAM or BAM file[0m
+[32m    CompareMetrics                               [36mCompare two metrics files.[0m
+[32m    ConvertSequencingArtifactToOxoG              [36mExtract OxoG metrics from generalized artifacts metrics[0m
+[32m    EstimateLibraryComplexity                    [36mEstimates library complexity.   [0m
+[32m    MeanQualityByCycle                           [36mCollect mean quality by cycle.[0m
+[32m    QualityScoreDistribution                     [36mChart the distribution of quality scores.  [0m
+
+[37m--------------------------------------------------------------------------------------
+[0m[31mMiscellaneous Tools:                             A set of miscellaneous tools.                [0m
+[32m    BaitDesigner                                 [36mDesigns baits or oligos for hybrid selection reactions.[0m
+[32m    FifoBuffer                                   [36mFIFO buffer used to buffer input and output streams with a customizable buffer size [0m
+
+[37m--------------------------------------------------------------------------------------
+[0m[31mSAM/BAM:                                         Tools for manipulating SAM, BAM, or related data.[0m
+[32m    AddCommentsToBam                             [36mAdds comments to the header of a BAM file.[0m
+[32m    AddOrReplaceReadGroups                       [36mReplace read groups in a BAM file.[0m
+[32m    BamIndexStats                                [36mGenerate index statistics from a BAM file[0m
+[32m    BamToBfq                                     [36mCreate BFQ files from a BAM file for use by the maq aligner.  [0m
+[32m    BuildBamIndex                                [36mGenerates a BAM index ".bai" file.  [0m
+[32m    CalculateReadGroupChecksum                   [36mCreates a hash code based on the read groups (RG).  [0m
+[32m    CheckTerminatorBlock                         [36mAsserts the provided gzip file's (e.g., BAM) last block is well-formed; RC 100 otherwise[0m
+[32m    CleanSam                                     [36mCleans the provided SAM/BAM, soft-clipping beyond-end-of-reference alignments and setting MAPQ to 0 for unmapped reads[0m
+[32m    CompareSAMs                                  [36mCompare two input ".sam" or ".bam" files.  [0m
+[32m    DownsampleSam                                [36mDownsample a SAM or BAM file.  [0m
+[32m    FastqToSam                                   [36mConverts a FASTQ file to an unaligned BAM or SAM file.  [0m
+[32m    FilterSamReads                               [36mSubset read data from a SAM or BAM file[0m
+[32m    FixMateInformation                           [36mVerify mate-pair information between mates and fix if needed.[0m
+[32m    GatherBamFiles                               [36mConcatenate one or more BAM files as efficiently as possible[0m
+[32m    MarkDuplicates                               [36mIdentifies duplicate reads.  [0m
+[32m    MarkDuplicatesWithMateCigar                  [36mIdentifies duplicate reads, accounting for mate CIGAR.  [0m
+[32m    MergeBamAlignment                            [36mMerge alignment data from a SAM or BAM with data in an unmapped BAM file.  [0m
+[32m    MergeSamFiles                                [36mMerges multiple SAM and/or BAM files into a single file.  [0m
+[32m    PositionBasedDownsampleSam                   [36mDownsample a SAM or BAM file to retain a subset of the reads based on the reads location in each tile in the flowcell.[0m
+[32m    ReorderSam                                   [36mReorders reads in a SAM or BAM file to match ordering in reference[0m
+[32m    ReplaceSamHeader                             [36mReplaces the SAMFileHeader in a SAM or BAM file.  [0m
+[32m    RevertOriginalBaseQualitiesAndAddMateCigar   [36mReverts the original base qualities and adds the mate cigar tag to read-group BAMs[0m
+[32m    RevertSam                                    [36mReverts SAM or BAM files to a previous state.  [0m
+[32m    SamFormatConverter                           [36mConvert a BAM file to a SAM file, or a SAM to a BAM[0m
+[32m    SamToFastq                                   [36mConverts a SAM or BAM file to FASTQ.  [0m
+[32m    SortSam                                      [36mSorts a SAM or BAM file.  [0m
+[32m    SplitSamByLibrary                            [36mSplits a SAM or BAM file into individual files by library[0m
+[32m    ValidateSamFile                              [36mValidates a SAM or BAM file.  [0m
+[32m    ViewSam                                      [36mPrints a SAM or BAM file to the screen[0m
+
+[37m--------------------------------------------------------------------------------------
+[0m[31mVCF/BCF:                                         Tools for manipulating VCF, BCF, or related data.[0m
+[32m    FilterVcf                                    [36mHard filters a VCF.[0m
+[32m    GatherVcfs                                   [36mGathers multiple VCF files from a scatter operation into a single VCF file[0m
+[32m    GenotypeConcordance                          [36mEvaluate genotype concordance between callsets.[0m
+[32m    LiftoverVcf                                  [36mLifts over a VCF file from one reference build to another.  [0m
+[32m    MakeSitesOnlyVcf                             [36mCreates a VCF bereft of genotype information from an input VCF or BCF[0m
+[32m    MergeVcfs                                    [36mMerges multiple VCF or BCF files into one VCF file or BCF[0m
+[32m    RenameSampleInVcf                            [36mRenames a sample within a VCF or BCF.  [0m
+[32m    SortVcf                                      [36mSorts one or more VCF files.  [0m
+[32m    SplitVcfs                                    [36mSplits SNPs and INDELs into separate files.  [0m
+[32m    UpdateVcfSequenceDictionary                  [36mTakes a VCF and a second file that contains a sequence dictionary and updates the VCF with the new sequence dictionary.[0m
+[32m    VcfFormatConverter                           [36mConverts VCF to BCF or BCF to VCF.  [0m
+[32m    VcfToIntervalList                            [36mConverts a VCF or BCF file to a Picard Interval List.[0m
+
+[37m--------------------------------------------------------------------------------------
+
+[0m
