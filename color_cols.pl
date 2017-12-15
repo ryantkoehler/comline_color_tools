@@ -15,6 +15,7 @@
 #   11/18/16 RTK; V0.52; Fix sham with leading spaces for column coloring
 #   2/1/17 RTK; V0.53; Add -g 
 #   10/7/17 RTK; V0.54; Fix range and column background colors (reset to bkg)
+#   12/13/17 RTK; V0.55; Add -ic
 #
 
 use strict;
@@ -25,7 +26,7 @@ use Readonly;
 use Carp;
 use RTKUtil     qw(split_string);
 
-Readonly my $VERSION => "color_cols.pl V0.54; RTK 10/7/17";
+Readonly my $VERSION => "color_cols.pl V0.55; RTK 12/13/17";
 
 Readonly my $COLSCHEME_2    => '2c';
 Readonly my $COLSCHEME_5    => '5c';
@@ -74,6 +75,7 @@ sub col_cols_use
     print "  -bg X      Set background color to X [RYGBCMW] (default $DEF_BG_COLOR)\n";
     print "  -iv        Invert foreground / background (i.e. for -mark or -step)\n";
     print "  -all       Color all lines; Default ignores comment '#'\n";
+    print "  -ic        Ignore (leading) comment '#' for col counts with -all\n";
     print "  -row       Apply coloring to *Rows* not columns\n";
     print "  -prd       Previous row differences (per token)\n";
     print "  -pld       Previous line differences (per char)\n";
@@ -102,6 +104,7 @@ sub col_cols_use
         'do_10c'    => 0,       
         'do_10r'    => 0,       
         'do_all'    => 0,
+        'do_ic'     => 0,
         'sub_cols'  => [],
         'sub_rows'  => [],
         'do_nc'     => 0,
@@ -130,6 +133,7 @@ sub col_cols_use
         '10c'       => \$comargs->{do_10c},
         '10r'       => \$comargs->{do_10r},
         'all'       => \$comargs->{do_all},
+        'ic'        => \$comargs->{do_ic},
         'cr=i{2}'   => $comargs->{sub_cols},
         'rr=i{2}'   => $comargs->{sub_rows},
         'nc'        => \$comargs->{do_nc},
@@ -600,7 +604,7 @@ sub dump_color_row_line
 
 ###########################################################################
 #
-#   Dump out one line with colored words
+#   Dump out one line with colored columns (words)
 #
 sub dump_color_col_line
 {
@@ -611,11 +615,18 @@ sub dump_color_col_line
     # Start at col 1; Increment on separators _after_ first _print_ col
     my $col = 1;
     my $pw = 0;
-    # Process each 'word' 
+    # Process each 'word'; 
+    #   List of tokens has (char) words AND (separator) spaces
     foreach my $word ( @{$tokens} ) {
+        # Printable?
         if ( $word =~ m/^\S+$/ ) {
-            $pw++;
+            # Ignoring leading comment? 
+            #   Increment print count if not ignoring, not comment
+            if ((! $comargs->{do_ic}) || ($word ne '#')) {
+                $pw++;
+            }
         }
+        # Separator after printable-word, increase col count
         if (( $word =~ m/$comargs->{sep_str}/ ) && ( $pw > 0 )) {
             $col++;
         }

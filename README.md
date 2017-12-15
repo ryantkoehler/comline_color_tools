@@ -6,7 +6,7 @@ Command line tools to (ANSI) colorize DNA sequences (bioinformatics) or numbers 
 
 | Tool              | Version | Use
 | ----------------- |:----- |:----
-| **color_cols.pl** | V0.54 | Color specific columns within text
+| **color_cols.pl** | V0.55 | Color specific columns within text
 | **color_nums.pl** | V0.22 | Color numbers within text
 | **color_seq.pl**  | V0.59 | Colors DNA sequence characters within text
 
@@ -19,6 +19,7 @@ Command line tools to (ANSI) colorize DNA sequences (bioinformatics) or numbers 
 4/8/16 RTK; Update color_seq to support lowercase and not (inverse)
 4/23/16 RTK; Update color_seq: Add -cran to restrict columns; Fix off-by-one bug with -bran
 10/7/17 RTK; Update all three scripts and use doc too.
+12/13/17 RTK; Update color_cols 0.54 to 0.55; add -ic
 
 
 ---
