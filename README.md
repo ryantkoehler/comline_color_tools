@@ -47,7 +47,7 @@ These perl modules are required:
 
 ---
 
-**To install** above modeules, try this:
+**To install** above modules, try this:
 
 `cpan install ANSIColor Getopt Readonly Carp`
 
