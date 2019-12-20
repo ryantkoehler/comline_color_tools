@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
+# #!/usr/bin/env perl -w
 #   Simple text coloring (e.g. for sequences)
 #   Ryan Koehler 10/11/10
 #   10/26/10 V0.2 RTK 

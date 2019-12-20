@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl 
+# #!/usr/bin/env perl -w
 #   Simple text coloring of columns
 #   Ryan Koehler 1/14/15; Modified from color_nums.pl
 #   3/21/15 RTK; V0.2; Add -2c and default to -10c

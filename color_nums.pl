@@ -1,4 +1,5 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl 
+# #!/usr/bin/env perl -w
 #   Simple text coloring of numbers
 #   Ryan Koehler 3/17/14; Modified from color_seq.pl
 #   4/4/14 RTK V0.2; Update with comargs 
