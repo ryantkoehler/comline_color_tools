@@ -1,9 +1,10 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 #   Simple text coloring of numbers
 #   Ryan Koehler 3/17/14; Modified from color_seq.pl
 #   4/4/14 RTK V0.2; Update with comargs 
 #   5/15/14 RTK V0.21; Add -iz
 #   11/18/16 RTK; Replace reset() with set_bold_white()
+#   12/20/19 RTK V0.3; Put split_string explicitly 
 #
 
 use strict;
@@ -12,9 +13,8 @@ use Getopt::Long;
 use Term::ANSIColor;
 use Readonly;
 use Carp;
-use RTKUtil     qw(split_string);
 
-Readonly my $VERSION => "color_nums.pl V0.22; RTK 11/18/16";
+Readonly my $VERSION => "color_nums.pl V0.3; RTK 12/20/19";
 
 #   Constants for coloring scheme
 Readonly my $COLSCHEME_DEF  => 0;
@@ -396,3 +396,39 @@ sub set_bold_white
 {
     print color('bold', 'white');
 }
+##############################################################################
+#   
+#   Split string into list of with / without tokens based on char class.
+#   Default char class is space, so tokens would be words + spaces
+#   If second argument, this is used in regex to match; Default = '\s'
+#
+sub split_string 
+{
+    my $in_string = shift @_;
+    my $regex = ( (scalar @_) > 0) ? shift @_ : '\s';
+    #
+    #   Initialize
+    #
+    my @tokens = ();
+    my $tok = '';
+    my $pstate = -1;
+    #
+    #   For each character, compare previous "state" building like-state tokens
+    #
+    foreach my $lchar ( split(//,$in_string ) ) {
+        my $state = ( $lchar =~ m/$regex/ ) ? 1 : 0;
+        if ( $state != $pstate ) {
+            if (length $tok) {
+                push( @tokens, $tok);
+                $tok = '';
+            }
+            $pstate = $state;
+        }
+        $tok .= $lchar;
+    }
+    if (length $tok) {
+        push( @tokens, $tok);
+    }
+    return \@tokens;
+}
+

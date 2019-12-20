@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 #   Simple text coloring of columns
 #   Ryan Koehler 1/14/15; Modified from color_nums.pl
 #   3/21/15 RTK; V0.2; Add -2c and default to -10c
@@ -16,6 +16,7 @@
 #   2/1/17 RTK; V0.53; Add -g 
 #   10/7/17 RTK; V0.54; Fix range and column background colors (reset to bkg)
 #   12/13/17 RTK; V0.55; Add -ic
+#   12/20/19 V0.6 RTK; Add explicit split_string
 #
 
 use strict;
@@ -24,9 +25,8 @@ use Getopt::Long qw(:config no_ignore_case);
 use Term::ANSIColor;
 use Readonly;
 use Carp;
-use RTKUtil     qw(split_string);
 
-Readonly my $VERSION => "color_cols.pl V0.55; RTK 12/13/17";
+Readonly my $VERSION => "color_cols.pl V0.6; RTK 12/20/19";
 
 Readonly my $COLSCHEME_2    => '2c';
 Readonly my $COLSCHEME_5    => '5c';
@@ -700,3 +700,39 @@ sub set_bold_white
 {
     print color('bold', 'white');
 }
+##############################################################################
+#   
+#   Split string into list of with / without tokens based on char class.
+#   Default char class is space, so tokens would be words + spaces
+#   If second argument, this is used in regex to match; Default = '\s'
+#
+sub split_string 
+{
+    my $in_string = shift @_;
+    my $regex = ( (scalar @_) > 0) ? shift @_ : '\s';
+    #
+    #   Initialize
+    #
+    my @tokens = ();
+    my $tok = '';
+    my $pstate = -1;
+    #
+    #   For each character, compare previous "state" building like-state tokens
+    #
+    foreach my $lchar ( split(//,$in_string ) ) {
+        my $state = ( $lchar =~ m/$regex/ ) ? 1 : 0;
+        if ( $state != $pstate ) {
+            if (length $tok) {
+                push( @tokens, $tok);
+                $tok = '';
+            }
+            $pstate = $state;
+        }
+        $tok .= $lchar;
+    }
+    if (length $tok) {
+        push( @tokens, $tok);
+    }
+    return \@tokens;
+}
+
