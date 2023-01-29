@@ -18,26 +18,26 @@
 #   10/7/17 RTK; V0.54; Fix range and column background colors (reset to bkg)
 #   12/13/17 RTK; V0.55; Add -ic
 #   12/20/19 V0.6 RTK; Add explicit split_string
+#   2023-01-28 RTK V0.7; Remove Readonly dependence
 #
 
 use strict;
 use warnings;
 use Getopt::Long qw(:config no_ignore_case);
 use Term::ANSIColor;
-use Readonly;
 use Carp;
 
-Readonly my $VERSION => "color_cols.pl V0.6; RTK 12/20/19";
+my $VERSION = "color_cols.pl V0.7; RTK 2023-01-28";
 
-Readonly my $COLSCHEME_2    => '2c';
-Readonly my $COLSCHEME_5    => '5c';
-Readonly my $COLSCHEME_10C  => '10c';
-Readonly my $COLSCHEME_10R  => '10r';
+my $COLSCHEME_2    = '2c';
+my $COLSCHEME_5    = '5c';
+my $COLSCHEME_10C  = '10c';
+my $COLSCHEME_10R  = '10r';
 
 # Defaults
-Readonly my $DEF_FG_COLOR => 'red';
-Readonly my $DEF_BG_COLOR => 'white';
-Readonly my $DEF_SEP_STR => '\s';
+my $DEF_FG_COLOR = 'red';
+my $DEF_BG_COLOR = 'white';
+my $DEF_SEP_STR = '\s';
 
 #   Supposed to make things nice with 'more' pager.... doesn't seem to matter!
 $Term::ANSIColor::AUTORESET = 1;

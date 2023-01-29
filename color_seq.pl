@@ -19,29 +19,29 @@
 #   10/7/17 v0.59 RTK; Change 'shift' on ccolist ref to avoid warning; 
 #       Fix but with -nacgt
 #   12/20/19 V0.6; RTK; Put split_string and dna stuff explicitly
+#   2023-01-28 RTK V0.7; Remove Readonly dependence
 #
 
 use strict;
 use warnings;
 use Getopt::Long;
 use Term::ANSIColor;
-use Readonly;
 use Carp;
 
 #   Constants for coloring scheme
-Readonly my $VERSION => "color_seq.pl V0.6; RTK 12/20/19";
-Readonly my $COLSCHEME_ORIG => 0;
-Readonly my $COLSCHEME_ABI  => 1;
-Readonly my $COLSCHEME_IGV  => 2;
-Readonly my $COLSCHEME_GC   => 3;
-Readonly my $COLSCHEME_WIN  => 4;
-Readonly my $COLSCHEME_ONE  => 5;
-Readonly my $COLSCHEME_DEF  => $COLSCHEME_ORIG;
+my $VERSION = "color_seq.pl V0.7; RTK 2023-01-28";
+my $COLSCHEME_ORIG = 0;
+my $COLSCHEME_ABI  = 1;
+my $COLSCHEME_IGV  = 2;
+my $COLSCHEME_GC   = 3;
+my $COLSCHEME_WIN  = 4;
+my $COLSCHEME_ONE  = 5;
+my $COLSCHEME_DEF  = $COLSCHEME_ORIG;
 
-Readonly my $DEF_WINSIZE    => 5;
-Readonly my $DEF_RUNSIZE    => 3;
+my $DEF_WINSIZE    = 5;
+my $DEF_RUNSIZE    = 3;
 
-Readonly my $CHAR_STATE     => 'bold';
+my $CHAR_STATE     = 'bold';
 
 #   Supposed to make things nice with 'more' pager.... doesn't seem to matter!
 $Term::ANSIColor::AUTORESET = 1;

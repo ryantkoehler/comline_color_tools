@@ -22,6 +22,7 @@ found within text files. Useful for bioinformatics or data analysis.
 - 10/7/17 RTK; Update all three scripts and use doc too.
 - 12/13/17 RTK; Update color_cols 0.54 to 0.55; add -ic
 - 12/20/19 RTK; Update; Remove (local) includes; /usr/bin/env perl -w
+- 2023-01-28 RTK; Remove Readonly.pm dependence from all color scripts.
 
 
 ---

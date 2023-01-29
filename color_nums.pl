@@ -6,25 +6,25 @@
 #   5/15/14 RTK V0.21; Add -iz
 #   11/18/16 RTK; Replace reset() with set_bold_white()
 #   12/20/19 RTK V0.3; Put split_string explicitly 
+#   2023-01-28 RTK V0.4; Remove Readonly dependence
 #
 
 use strict;
 use warnings;
 use Getopt::Long;
 use Term::ANSIColor;
-use Readonly;
 use Carp;
 
-Readonly my $VERSION => "color_nums.pl V0.3; RTK 12/20/19";
+my $VERSION = "color_nums.pl V0.4; RTK 2023-01-28";
 
 #   Constants for coloring scheme
-Readonly my $COLSCHEME_DEF  => 0;
-Readonly my $COLSCHEME_RYC  => 1;
-Readonly my $COLSCHEME_RWB  => 2;
-Readonly my $COLSCHEME_QUAL => 3;
+my $COLSCHEME_DEF  = 0;
+my $COLSCHEME_RYC  = 1;
+my $COLSCHEME_RWB  = 2;
+my $COLSCHEME_QUAL = 3;
 
-Readonly my $DEF_QUAL_COLOR => 'cyan';
-Readonly my $DEF_BACK_COLOR => 'white';
+my $DEF_QUAL_COLOR = 'cyan';
+my $DEF_BACK_COLOR = 'white';
 
 
 #   Supposed to make things nice with 'more' pager.... doesn't seem to matter!
