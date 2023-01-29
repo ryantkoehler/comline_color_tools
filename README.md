@@ -7,9 +7,9 @@ found within text files. Useful for bioinformatics or data analysis.
 
 | Tool              | Version | Use
 | ----------------- |:----- |:----
-| **color_cols.pl** | V0.6 | Color specific columns within text
-| **color_nums.pl** | V0.3 | Color numbers within text
-| **color_seq.pl**  | V0.6 | Colors DNA sequence characters within text
+| **color_cols.pl** | V0.7 | Color specific columns within text
+| **color_nums.pl** | V0.4 | Color numbers within text
+| **color_seq.pl**  | V0.7 | Colors DNA sequence characters within text
 
 
 ---
